@@ -104,21 +104,11 @@ void ANBC_Player::Move(const FInputActionValue& Value)
 	float DeltaTime = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
 	float MoveSpeed = 500.0f;
 
-	FVector DeltaLocation = FVector::ZeroVector;
+	FVector Forward = GetActorForwardVector();
+	FVector Right = GetActorRightVector();
+	FVector Direction = (Forward * MoveInput.X) + (Right * MoveInput.Y);
 
-	// 전진 혹은 후진
-	if (!FMath::IsNearlyZero(MoveInput.X))
-	{
-		DeltaLocation.X = MoveInput.X * MoveSpeed * DeltaTime;
-	}
-
-	// 오른쪽 혹은 왼쪽
-	if (!FMath::IsNearlyZero(MoveInput.Y))
-	{
-		DeltaLocation.Y = MoveInput.Y * MoveSpeed * DeltaTime;
-	}
-
-	AddActorLocalOffset(DeltaLocation, true);
+	AddActorLocalOffset(Direction * MoveSpeed * DeltaTime, true);
 }
 
 void ANBC_Player::Look(const FInputActionValue& Value)
@@ -130,16 +120,15 @@ void ANBC_Player::Look(const FInputActionValue& Value)
 	const FVector2D LookInput = Value.Get<FVector2D>();
 	float DeltaTime = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
 	float RotationSpeed = 45.0f;
-
 	FRotator DeltaRotation = FRotator::ZeroRotator;
 
-	// 전진 혹은 후진
+	// Yaw 회전
 	if (!FMath::IsNearlyZero(LookInput.X))
 	{
 		DeltaRotation.Yaw = LookInput.X * RotationSpeed * DeltaTime;
 	}
 
-	// 오른쪽 혹은 왼쪽
+	// Pitch 회전
 	if (!FMath::IsNearlyZero(LookInput.Y))
 	{
 		DeltaRotation.Pitch = LookInput.Y * RotationSpeed * DeltaTime;
