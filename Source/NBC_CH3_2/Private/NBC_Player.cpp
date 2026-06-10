@@ -34,7 +34,7 @@ ANBC_Player::ANBC_Player()
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArmComponent->SetupAttachment(CapsuleComponent);
 	SpringArmComponent->TargetArmLength = 300.0f;
-	SpringArmComponent->bUsePawnControlRotation = true;
+	SpringArmComponent->bUsePawnControlRotation = false;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
 	CameraComponent->SetupAttachment(SpringArmComponent);
@@ -119,20 +119,29 @@ void ANBC_Player::Look(const FInputActionValue& Value)
 	// LookInput.Y = 마우스 위아래 이동량 (Pitch 회전)
 	const FVector2D LookInput = Value.Get<FVector2D>();
 	float DeltaTime = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
-	float RotationSpeed = 45.0f;
-	FRotator DeltaRotation = FRotator::ZeroRotator;
+	float RotationSpeed = 50.0f;
 
 	// Yaw 회전
 	if (!FMath::IsNearlyZero(LookInput.X))
 	{
-		DeltaRotation.Yaw = LookInput.X * RotationSpeed * DeltaTime;
+		AddActorLocalRotation(FRotator(0.f, LookInput.X * RotationSpeed * DeltaTime, 0.f));
 	}
 
 	// Pitch 회전
 	if (!FMath::IsNearlyZero(LookInput.Y))
 	{
-		DeltaRotation.Pitch = LookInput.Y * RotationSpeed * DeltaTime;
-	}
+		if (SpringArmComponent)
+		{
+			// 현재 SpringArm의 회전값을 가져옴
+			FRotator CurrentRotation = SpringArmComponent->GetRelativeRotation();
 
-	AddActorLocalRotation(DeltaRotation, true);
+			// 새로운 Pitch 계산
+			float NewPitch = CurrentRotation.Pitch + (LookInput.Y * RotationSpeed * DeltaTime);
+
+			// Pitch 범위 제한 (Clamping): 너무 위나 아래를 보지 못하도록
+			NewPitch = FMath::Clamp(NewPitch, -80.0f, 80.0f);
+
+			SpringArmComponent->SetRelativeRotation(FRotator(NewPitch, 0.f, 0.f));
+		}
+	}
 }
