@@ -9,6 +9,7 @@ class UCapsuleComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
 class USpringArmComponent;
+struct FInputActionValue;
 
 UCLASS()
 class NBC_CH3_2_API ANBC_Player : public APawn
@@ -34,9 +35,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCameraComponent* CameraComponent;
 
-public:
-	virtual void Tick(float DeltaTime) override;
-
+	// 입력 바인딩 처리 함수
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	// 액션 함수
+	UFUNCTION()
+	void Move(const FInputActionValue& Value);
+	UFUNCTION()
+	void Look(const FInputActionValue& Value);
 
 };

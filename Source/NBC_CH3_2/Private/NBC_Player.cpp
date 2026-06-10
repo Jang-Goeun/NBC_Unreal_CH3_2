@@ -3,10 +3,12 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "EnhancedInputComponent.h"
+#include "NBC_PlayerController.h"
 
 ANBC_Player::ANBC_Player()
 {
- 	PrimaryActorTick.bCanEverTick = true;
+ 	PrimaryActorTick.bCanEverTick = false;
 
 	// 충돌 컴포넌트 생성 후 루트로 설정
 	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
@@ -58,15 +60,46 @@ void ANBC_Player::BeginPlay()
 
 }
 
-void ANBC_Player::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 void ANBC_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	// Enhanced InputComponent로 캐스팅
+	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		// NBC_PlayerController로 캐스팅
+		if (ANBC_PlayerController* PlayerController = Cast<ANBC_PlayerController>(GetController()))
+		{
+			// IA_Move 액션 키를 누르고 있는 동안 Move() 호출
+			if (PlayerController->MoveAction)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->MoveAction,
+					ETriggerEvent::Triggered,
+					this,
+					&ANBC_Player::Move
+				);
+			}
+
+			if (PlayerController->LookAction)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->LookAction,
+					ETriggerEvent::Triggered,
+					this,
+					&ANBC_Player::Look
+				);
+			}
+		}
+	}
 }
 
+void ANBC_Player::Move(const FInputActionValue& Value)
+{
+
+}
+
+void ANBC_Player::Look(const FInputActionValue& Value)
+{
+
+}
