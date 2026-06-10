@@ -26,9 +26,9 @@ ANBC_Player::ANBC_Player()
 	SkeletalMeshComponent->SetupAttachment(CapsuleComponent);
 
 	// Physics 설정(Mesh)
-	if (CapsuleComponent)
+	if (SkeletalMeshComponent)
 	{
-		CapsuleComponent->SetSimulatePhysics(false);
+		SkeletalMeshComponent->SetSimulatePhysics(false);
 	}
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
