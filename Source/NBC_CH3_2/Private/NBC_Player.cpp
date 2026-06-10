@@ -5,6 +5,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "NBC_PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 
 ANBC_Player::ANBC_Player()
 {
@@ -96,10 +97,53 @@ void ANBC_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void ANBC_Player::Move(const FInputActionValue& Value)
 {
+	if (!Controller) return;
 
+	// (X=1, Y=0) → 전진 / (X=-1, Y=0) → 후진 / (X=0, Y=1) → 오른쪽 / (X=0, Y=-1) → 왼쪽
+	const FVector2D MoveInput = Value.Get<FVector2D>();
+	float DeltaTime = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
+	float MoveSpeed = 500.0f;
+
+	FVector DeltaLocation = FVector::ZeroVector;
+
+	// 전진 혹은 후진
+	if (!FMath::IsNearlyZero(MoveInput.X))
+	{
+		DeltaLocation.X = MoveInput.X * MoveSpeed * DeltaTime;
+	}
+
+	// 오른쪽 혹은 왼쪽
+	if (!FMath::IsNearlyZero(MoveInput.Y))
+	{
+		DeltaLocation.Y = MoveInput.Y * MoveSpeed * DeltaTime;
+	}
+
+	AddActorLocalOffset(DeltaLocation, true);
 }
 
 void ANBC_Player::Look(const FInputActionValue& Value)
 {
+	if (!Controller) return;
 
+	// LookInput.X = 마우스 좌우 이동량 (Yaw 회전)
+	// LookInput.Y = 마우스 위아래 이동량 (Pitch 회전)
+	const FVector2D LookInput = Value.Get<FVector2D>();
+	float DeltaTime = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
+	float RotationSpeed = 45.0f;
+
+	FRotator DeltaRotation = FRotator::ZeroRotator;
+
+	// 전진 혹은 후진
+	if (!FMath::IsNearlyZero(LookInput.X))
+	{
+		DeltaRotation.Yaw = LookInput.X * RotationSpeed * DeltaTime;
+	}
+
+	// 오른쪽 혹은 왼쪽
+	if (!FMath::IsNearlyZero(LookInput.Y))
+	{
+		DeltaRotation.Pitch = LookInput.Y * RotationSpeed * DeltaTime;
+	}
+
+	AddActorLocalRotation(DeltaRotation, true);
 }
