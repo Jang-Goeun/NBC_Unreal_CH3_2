@@ -89,6 +89,7 @@ void ANBC_Player::Tick(float DeltaTime)
 	// 충돌 여부에 따른 행동
 	if (bHit && VerticalVelocity < 0)
 	{
+		bIsGrounded = true;
 		VerticalVelocity = 0.0f;
 
 		FVector NewLocation = GetActorLocation();
@@ -97,9 +98,8 @@ void ANBC_Player::Tick(float DeltaTime)
 	}
 	else
 	{
-		{
-			AddActorLocalOffset(FVector(0, 0, VerticalVelocity * DeltaTime), true);
-		}
+		bIsGrounded = false;
+		AddActorLocalOffset(FVector(0, 0, VerticalVelocity * DeltaTime), true);
 	}
 }
 
@@ -154,20 +154,24 @@ void ANBC_Player::Move(const FInputActionValue& Value)
 	// (X=1, Y=0) → 전진 / (X=-1, Y=0) → 후진 / (X=0, Y=1) → 오른쪽 / (X=0, Y=-1) → 왼쪽
 	const FVector MoveInput = Value.Get<FVector>();
 	float DeltaTime = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
-	float MoveSpeed = 500.0f;
+	float CurrentSpeed = BaseMoveSpeed;
 
+	if (!bIsGrounded)
+	{
+		CurrentSpeed *= AirControlFactor;
+	}
 	FVector Forward = GetActorForwardVector();
 	FVector Right = GetActorRightVector();
 	FVector Up = GetActorUpVector();
 
-	if (MoveInput.Z > 0)
+	if (MoveInput.Z > 0 && VerticalVelocity < 0)
 	{
-		if (VerticalVelocity < 0) VerticalVelocity = 0.0f;
+		VerticalVelocity = 0.0f;
 	}
 
 	FVector Direction = (Forward * MoveInput.X) + (Right * MoveInput.Y) + (Up * MoveInput.Z);
 
-	AddActorLocalOffset(Direction * MoveSpeed * DeltaTime, true);
+	AddActorLocalOffset(Direction * CurrentSpeed * DeltaTime, true);
 }
 
 void ANBC_Player::Look(const FInputActionValue& Value)
