@@ -9,7 +9,7 @@
 
 ANBC_Player::ANBC_Player()
 {
- 	PrimaryActorTick.bCanEverTick = false;
+ 	PrimaryActorTick.bCanEverTick = true;
 
 	// 충돌 컴포넌트 생성 후 루트로 설정
 	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
@@ -59,6 +59,48 @@ void ANBC_Player::BeginPlay()
 {
 	Super::BeginPlay();
 
+}
+
+void ANBC_Player::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// 중력
+	VerticalVelocity += Gravity * DeltaTime;
+
+	// 지면 충돌 감지
+	FHitResult HitResult;
+	FVector Start = GetActorLocation();
+	float CapsuleHalfHeight = CapsuleComponent ? CapsuleComponent->GetScaledCapsuleHalfHeight() : 88.0f;
+
+	// 라인트레이스
+	FVector End = Start + FVector(0, 0, -(CapsuleHalfHeight + 5.0f));
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		ECC_Visibility,
+		CollisionParams
+		);
+
+	// 충돌 여부에 따른 행동
+	if (bHit && VerticalVelocity < 0)
+	{
+		VerticalVelocity = 0.0f;
+
+		FVector NewLocation = GetActorLocation();
+		NewLocation.Z = HitResult.Location.Z + CapsuleHalfHeight;
+		SetActorLocation(NewLocation);
+	}
+	else
+	{
+		{
+			AddActorLocalOffset(FVector(0, 0, VerticalVelocity * DeltaTime), true);
+		}
+	}
 }
 
 void ANBC_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -117,6 +159,11 @@ void ANBC_Player::Move(const FInputActionValue& Value)
 	FVector Forward = GetActorForwardVector();
 	FVector Right = GetActorRightVector();
 	FVector Up = GetActorUpVector();
+
+	if (MoveInput.Z > 0)
+	{
+		if (VerticalVelocity < 0) VerticalVelocity = 0.0f;
+	}
 
 	FVector Direction = (Forward * MoveInput.X) + (Right * MoveInput.Y) + (Up * MoveInput.Z);
 

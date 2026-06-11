@@ -21,6 +21,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick( float DeltaTime ) override;
 
 	// Capsule 컴포넌트 포인터
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -46,4 +47,7 @@ protected:
 	UFUNCTION()
 	void Roll(const FInputActionValue& Value);
 
+	// 중력 관련 변수
+	float Gravity = -980.0f;
+	float VerticalVelocity = 0.0f;
 };
