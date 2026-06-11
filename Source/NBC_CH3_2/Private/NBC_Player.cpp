@@ -91,6 +91,16 @@ void ANBC_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 					&ANBC_Player::Look
 				);
 			}
+
+			if (PlayerController->RollAction)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->RollAction,
+					ETriggerEvent::Triggered,
+					this,
+					&ANBC_Player::Roll
+				);
+			}
 		}
 	}
 }
@@ -100,13 +110,15 @@ void ANBC_Player::Move(const FInputActionValue& Value)
 	if (!Controller) return;
 
 	// (X=1, Y=0) → 전진 / (X=-1, Y=0) → 후진 / (X=0, Y=1) → 오른쪽 / (X=0, Y=-1) → 왼쪽
-	const FVector2D MoveInput = Value.Get<FVector2D>();
+	const FVector MoveInput = Value.Get<FVector>();
 	float DeltaTime = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
 	float MoveSpeed = 500.0f;
 
 	FVector Forward = GetActorForwardVector();
 	FVector Right = GetActorRightVector();
-	FVector Direction = (Forward * MoveInput.X) + (Right * MoveInput.Y);
+	FVector Up = GetActorUpVector();
+
+	FVector Direction = (Forward * MoveInput.X) + (Right * MoveInput.Y) + (Up * MoveInput.Z);
 
 	AddActorLocalOffset(Direction * MoveSpeed * DeltaTime, true);
 }
@@ -121,27 +133,23 @@ void ANBC_Player::Look(const FInputActionValue& Value)
 	float DeltaTime = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
 	float RotationSpeed = 50.0f;
 
-	// Yaw 회전
-	if (!FMath::IsNearlyZero(LookInput.X))
-	{
-		AddActorLocalRotation(FRotator(0.f, LookInput.X * RotationSpeed * DeltaTime, 0.f));
-	}
+	FRotator DeltaRotation(
+		-LookInput.Y * RotationSpeed * DeltaTime, // Pitch (마우스 위아래)
+	     LookInput.X * RotationSpeed * DeltaTime,  // Yaw (마우스 좌우)
+	     0.0f
+	);
 
-	// Pitch 회전
-	if (!FMath::IsNearlyZero(LookInput.Y))
-	{
-		if (SpringArmComponent)
-		{
-			// 현재 SpringArm의 회전값을 가져옴
-			FRotator CurrentRotation = SpringArmComponent->GetRelativeRotation();
+	AddActorLocalRotation(DeltaRotation);
+}
 
-			// 새로운 Pitch 계산
-			float NewPitch = CurrentRotation.Pitch + (LookInput.Y * RotationSpeed * DeltaTime);
+void ANBC_Player::Roll(const FInputActionValue& Value)
+{
+     if (!Controller) return;
 
-			// Pitch 범위 제한 (Clamping): 너무 위나 아래를 보지 못하도록
-			NewPitch = FMath::Clamp(NewPitch, -80.0f, 80.0f);
+     const float RollInput = Value.Get<float>();
+     float DeltaTime = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
+	 float RollSpeed = 150.0f;
 
-			SpringArmComponent->SetRelativeRotation(FRotator(NewPitch, 0.f, 0.f));
-		}
-	}
+     // 로컬 X축(Forward)을 기준으로 회전
+     AddActorLocalRotation(FRotator(0.0f, 0.0f, RollInput * RollSpeed *DeltaTime));
 }

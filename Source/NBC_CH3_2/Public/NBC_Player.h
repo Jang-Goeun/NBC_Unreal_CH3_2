@@ -43,5 +43,7 @@ protected:
 	void Move(const FInputActionValue& Value);
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
+	UFUNCTION()
+	void Roll(const FInputActionValue& Value);
 
 };
